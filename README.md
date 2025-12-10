@@ -1,6 +1,6 @@
 # get-noa
 
-NOA CLI Installer
+Installer for the NOA CLI tool for [nanofleets.com](https://nanofleets.com)
 
 ## Installing
 
