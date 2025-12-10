@@ -33,9 +33,10 @@ else
     exit 1
 fi
 
-# macOS: Clear quarantine
+# macOS: Clear quarantine and ad-hoc codesign
 if [ "$OS" = "darwin" ]; then
     xattr -d com.apple.quarantine "$DEST" 2>/dev/null || true
+    codesign -s - "$DEST" 2>/dev/null || true
 fi
 
 # Path Check
