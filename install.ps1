@@ -2,38 +2,44 @@
 $ErrorActionPreference = "Stop"
 
 # Config
+$Repo       = "nanofleets/get-noa"
 $InstallDir = "$env:LOCALAPPDATA\noa"
 $ExePath    = "$InstallDir\noa.exe"
-$Url        = "https://github.com/nanofleets/get-noa/releases/latest/download/noa-windows-amd64.exe"
 
-# 1. Create Directory
+# 1. Resolve Version (Head request to follow redirect)
+try {
+    $Resp = Invoke-WebRequest "https://github.com/$Repo/releases/latest" -Method Head
+    $Version = ($Resp.BaseResponse.ResponseUri.Segments[-1]).Trim()
+} catch {
+    $Version = "latest"
+}
+Write-Host "Found version: $Version"
+
+# 2. Setup
+$Url = "https://github.com/$Repo/releases/latest/download/noa-windows-amd64.exe"
 if (!(Test-Path $InstallDir)) { New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null }
 
-# 2. Download
+# 3. Download
 Write-Host "Downloading $Url"
-Write-Host "       to $ExePath"
+Write-Host "         to $ExePath"
 
 try {
     Invoke-WebRequest -Uri $Url -OutFile $ExePath
 } catch {
-    Write-Error "Download failed. Check your internet or repository settings."
+    Write-Error "Download failed."
     exit 1
 }
 
-# 3. Unblock Binary (Crucial for SmartScreen)
+# 4. Finalize
 Unblock-File -Path $ExePath
 
-# 4. Path Management
-# Add to User Environment (Permanent)
+# Path Updates
 $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
 if ($UserPath -notlike "*$InstallDir*") {
     [Environment]::SetEnvironmentVariable("Path", "$UserPath;$InstallDir", "User")
 }
-
-# Add to Current Session (Immediate use)
 if ($env:Path -notlike "*$InstallDir*") {
     $env:Path = "$env:Path;$InstallDir"
 }
 
-Write-Host ""
 Write-Host "Finished. Run 'noa version' to verify."
